@@ -4,6 +4,10 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization
 {
     public static class TinyIoCContainerExtensions
     {
+        /// <summary>
+        /// Registers Reader Processors.
+        /// </summary>
+        /// <param name="container"></param>
         public static void AddReaders(this TinyIoCContainer container)
         {
             container.Register<
@@ -133,6 +137,10 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization
             >();
         }
 
+        /// <summary>
+        /// Registers Writer Processors.
+        /// </summary>
+        /// <param name="container"></param>
         public static void AddWriters(this TinyIoCContainer container)
         {
             container.Register<

@@ -15,6 +15,14 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistenc
 {
     public static class TinyIoCContainerExtensions
     {
+        /// <summary>
+        /// Registers Mirrors. Shuts down application upon successful initialization.
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="initMirrorKeys"></param>
+        /// <param name="shouldInitializeMirrors"></param>
+        /// <param name="userNeuronId"></param>
+        /// <returns></returns>
         public static async Task<bool> AddMirrors(
             this TinyIoCContainer container,
             IEnumerable<object> initMirrorKeys,
@@ -70,13 +78,19 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistenc
             return initialized;
         }
 
+        /// <summary>
+        /// Registers a GrannyService.
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="identityAccessOutBaseUrl"></param>
+        /// <param name="appUserId"></param>
         public static void AddGrannyService(this TinyIoCContainer container, string identityAccessOutBaseUrl, string appUserId)
         {
             container.Register<IGrannyService>(
                 (tic, npo) => new GrannyService(
                     container.Resolve<IServiceProvider>(),
                     container.Resolve<INetworkRepository>(),
-                    container.Resolve<IDictionary<string, Network>>(),
+                    container.Resolve<INetworkDictionary<string>>(),
                     container.Resolve<ITransaction>(),
                     container.Resolve<INetworkTransactionService>(),
                     container.Resolve<IValidationClient>(),
