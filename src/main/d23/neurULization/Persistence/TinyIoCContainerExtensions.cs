@@ -7,7 +7,6 @@ using ei8.EventSourcing.Client;
 using Nancy.TinyIoc;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,27 +14,37 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistenc
 {
     public static class TinyIoCContainerExtensions
     {
+
+        public static async Task<(bool initialized, bool registered)> AddMirrorsAsync(
+            this TinyIoCContainer container,
+            IEnumerable<object> initMirrorKeys
+        ) => await container.AddMirrorsAsync(
+            initMirrorKeys, 
+            false, 
+            Guid.Empty
+        );
+
         /// <summary>
-        /// Registers Mirrors. Shuts down application upon successful initialization.
+        /// Registers Mirrors.
         /// </summary>
         /// <param name="container"></param>
         /// <param name="initMirrorKeys"></param>
-        /// <param name="shouldInitializeMirrors"></param>
+        /// <param name="shouldInitializeMissingMirrors"></param>
         /// <param name="userNeuronId"></param>
-        /// <returns></returns>
-        public static async Task<bool> AddMirrors(
+        /// <returns>A boolean tuple indicating whether mirrors were (1) initialized or (2) registered successfully.</returns>
+        public static async Task<(bool initialized, bool registered)> AddMirrorsAsync(
             this TinyIoCContainer container,
             IEnumerable<object> initMirrorKeys,
-            bool shouldInitializeMirrors,
+            bool shouldInitializeMissingMirrors,
             Guid userNeuronId
         )
         {
-            bool result = false;
+            bool registered = false;
 
             var mirrorRepository = container.Resolve<IMirrorRepository>();
             var missingInitMirrorConfigs = await mirrorRepository.GetAllMissingAsync(initMirrorKeys);
 
-            var initialized = shouldInitializeMirrors &&
+            bool initialized = shouldInitializeMissingMirrors &&
                 missingInitMirrorConfigs.Any() &&
                 await TinyIoCContainerExtensions.InitializeMirrors(
                     container.Resolve<ITransaction>(),
@@ -44,24 +53,17 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistenc
                     missingInitMirrorConfigs.Select(mimc => mimc.Key)
                 );
 
-            if (!shouldInitializeMirrors || !initialized)
+            if (!initialized)
             {
-                Trace.WriteLine("Not initializing mirrors or Mirrors exist. Continuing app initialization...");
-
                 IMirrorSet mirrorSet = null;
                 if ((mirrorSet = await mirrorRepository.CreateMirrorSet()) != null)
                 {
                     container.Register(mirrorSet);
-                    result = true;
+                    registered = true;
                 }
             }
-            else
-            {
-                Trace.WriteLine("Mirrors initialized successfully. Shutting down application...");
-                Environment.Exit(0);
-            }
 
-            return result;
+            return (initialized, registered);
         }
 
         private static async Task<bool> InitializeMirrors(
